@@ -1,25 +1,32 @@
 import { Form, Input, Button, Card, Row, Col, Typography, message } from "antd";
 import axios from "axios";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { saveLogin } from "../store/auth/authSlicer";
 
 const { Title, Text } = Typography;
 
 function Login() {
+  const dispatch = useDispatch();
+
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
 
   const onFinish = async (values) => {
     try {
+
       const res = await axios.post("http://localhost:8001/login", values);
-      console.log(res);
       if (res.status === 200) {
         messageApi.open({
           type: "success",
           content: "User Login successfully!",
         });
-        console.log("Token:", res.data.data);
-        localStorage.setItem("users", JSON.stringify(res.data.data));
-        navigate('/');
+
+        dispatch(saveLogin({
+          ...res.data.data,
+          isAuthenticate: true
+        }));
+        navigate("/chat");
       } else {
         console.log("error", res);
       }

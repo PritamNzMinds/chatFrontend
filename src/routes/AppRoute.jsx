@@ -1,17 +1,20 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import ChatPage from "../pages/ChatPage";
 import PrivateRoutes from "./PrivateRoutes";
+import { useSelector } from "react-redux";
 
 const AppRoute = () => {
+  const auth=useSelector((state)=> state);
   return (
     <Routes>
-      <Route element={<PrivateRoutes />}>
-        <Route path="/" element={<ChatPage />} />
-      </Route>
+      <Route path="/" element={<Navigate to={"/login"}/>} />
       <Route path="/register" element={<Register />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={(auth.user===null) ? <Login/> : <Navigate to={"/chat"}/>} />
+      <Route element={<PrivateRoutes />}>
+        <Route path="/chat" element={<ChatPage />} />
+      </Route>
     </Routes>
   );
 };

@@ -1,13 +1,17 @@
 import { Button, Input, Space } from "antd";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
 
 const socket = io("http://localhost:8001/");
 
 const MessageInbox = ({selectedUser,currentUser}) => {
+  const userDetails=useSelector((state)=> state?.user);
+  
   const [messageList, setMessageList] = useState([]);
   const [message, setMessage] = useState("");
+
 
   const handleSendMessage = () => {
     if (!message.trim() || !selectedUser) return;
@@ -37,15 +41,13 @@ const MessageInbox = ({selectedUser,currentUser}) => {
    useEffect(() => {
     const fetchMessage = async () => {
       try {
-        const loggedInUser = localStorage.getItem("users");
         setMessageList([]);
-        if (loggedInUser && selectedUser) {
-          const userObject = JSON.parse(loggedInUser);
+        if (userDetails && selectedUser) {
           const res = await axios.get(
             `http://localhost:8001/messages/${selectedUser?._id}`,
             {
               headers: {
-                Authorization: `Bearer ${userObject.token}`,
+                Authorization: `Bearer ${userDetails.token}`,
               },
             }
           );

@@ -5,12 +5,16 @@ import MessageInbox from "../components/MessageInbox";
 import { io } from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { removeLogin } from "../store/auth/authSlicer";
 
 const { Header, Content, Footer, Sider } = Layout;
 
 const socket = io("http://localhost:8001/");
 const ChatPage = () => {
 
+  const userDetails=useSelector((state)=> state?.user);
+  const dispatch=useDispatch()
   const navigate=useNavigate()
 
   const [currentUser, setCurrentUser] = useState();
@@ -19,7 +23,7 @@ const ChatPage = () => {
   const [activeReceiver, setActiveReceiver] = useState(null);
 
   const handleLogout=()=>{
-    localStorage.removeItem("users");
+    dispatch(removeLogin());
     navigate("/login");
   }
 
@@ -27,18 +31,15 @@ const ChatPage = () => {
     // fetch user data except logged In user
     const fetchUserData = async () => {
       try {
-        const loggedInUser = localStorage.getItem("users");
-
-        if (loggedInUser) {
-          const userObject = JSON.parse(loggedInUser);
+        if (userDetails) {
           // join room
-          socket.emit("addUser", userObject.id);
+          socket.emit("addUser", userDetails.id);
           // set logged in user
-          setCurrentUser(userObject);
+          setCurrentUser(userDetails);
           // get res from db
           const res = await axios.get("http://localhost:8001/getUsers", {
             headers: {
-              Authorization: `Bearer ${userObject.token}`,
+              Authorization: `Bearer ${userDetails.token}`,
             },
           });
           setUserList(res.data.data.users);
