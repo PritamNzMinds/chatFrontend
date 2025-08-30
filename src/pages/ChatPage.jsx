@@ -33,7 +33,8 @@ const ChatPage = () => {
       try {
         if (userDetails) {
           // join room
-          socket.emit("addUser", userDetails.id);
+          // socket.emit("addUser", userDetails.id);
+          // socket.emit("addUser", userDetails);
           // set logged in user
           setCurrentUser(userDetails);
           // get res from db
@@ -51,11 +52,21 @@ const ChatPage = () => {
     };
 
     fetchUserData();
+  //   socket.on("connect", () => {
+  //   console.log("✅ Connected to server with socket id:", socket.id);
+  // });
     return () => {
       socket.off("getUsers");
       // socket.off("getMessage");
     };
   }, []);
+
+//   useEffect(() => {
+//     console.log(currentUser?.id)
+//   if (currentUser?.id) {
+//     socket.emit("addUser", currentUser);
+//   }
+// }, [currentUser, socket]);
 
 
   // useEffect(() => {

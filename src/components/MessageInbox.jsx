@@ -6,16 +6,14 @@ import { io } from "socket.io-client";
 
 const socket = io("http://localhost:8001/");
 
-const MessageInbox = ({selectedUser,currentUser}) => {
-  const userDetails=useSelector((state)=> state?.user);
-  
+const MessageInbox = ({ selectedUser, currentUser }) => {
+  const userDetails = useSelector((state) => state?.user);
+
   const [messageList, setMessageList] = useState([]);
   const [message, setMessage] = useState("");
 
-
   const handleSendMessage = () => {
     if (!message.trim() || !selectedUser) return;
-
     socket.emit("sendMessage", {
       senderId: currentUser.id,
       receiverId: selectedUser._id,
@@ -29,6 +27,10 @@ const MessageInbox = ({selectedUser,currentUser}) => {
   };
 
   useEffect(() => {
+    if (currentUser?.id) {
+      socket.emit("addUser", currentUser);
+    }
+
     socket.on("getMessage", (data) => {
       setMessageList((prev) => [...prev, data]);
     });
@@ -36,9 +38,9 @@ const MessageInbox = ({selectedUser,currentUser}) => {
     return () => {
       socket.off("getMessage");
     };
-  }, [socket]);
+  }, [currentUser,socket,message]);
 
-   useEffect(() => {
+  useEffect(() => {
     const fetchMessage = async () => {
       try {
         setMessageList([]);
@@ -59,7 +61,6 @@ const MessageInbox = ({selectedUser,currentUser}) => {
     };
     fetchMessage();
   }, [selectedUser]);
-
 
   // message filter which help show person to person message
   const filterMessage = messageList.filter(
@@ -95,7 +96,6 @@ const MessageInbox = ({selectedUser,currentUser}) => {
               maxHeight: "400px",
               // display:"flex",
               // flexDirection:"column-reverse"
-
             }}
           >
             {filterMessage.map((msg, i) => (

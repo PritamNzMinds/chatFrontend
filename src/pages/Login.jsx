@@ -3,9 +3,11 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { saveLogin } from "../store/auth/authSlicer";
+import { io } from "socket.io-client";
 
 const { Title, Text } = Typography;
 
+const socket = io("http://localhost:8001/");
 function Login() {
   const dispatch = useDispatch();
 
@@ -21,12 +23,14 @@ function Login() {
           type: "success",
           content: "User Login successfully!",
         });
+        // add user
+        socket.emit("addUser", res.data.data);
 
         dispatch(saveLogin({
           ...res.data.data,
           isAuthenticate: true
         }));
-        navigate("/chat");
+        navigate("/");
       } else {
         console.log("error", res);
       }

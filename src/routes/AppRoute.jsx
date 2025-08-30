@@ -9,11 +9,11 @@ const AppRoute = () => {
   const auth=useSelector((state)=> state);
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={"/login"}/>} />
+      {/* <Route path="/" element={<Navigate to={"/login"}/>} /> */}
       <Route path="/register" element={<Register />} />
-      <Route path="/login" element={(auth.user===null) ? <Login/> : <Navigate to={"/chat"}/>} />
+      <Route path="/login" element={(auth.user===null) ? <Login/> : <Navigate to={"/"}/>} />
       <Route element={<PrivateRoutes />}>
-        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/" element={<ChatPage />} />
       </Route>
     </Routes>
   );
