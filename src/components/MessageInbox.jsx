@@ -3,12 +3,14 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
+import Loading from "./Loading";
 
 const socket = io("http://localhost:8001/");
 
 const MessageInbox = ({ selectedUser, currentUser }) => {
   const userDetails = useSelector((state) => state?.user);
 
+  const [loading, setLoading] = useState(true);
   const [messageList, setMessageList] = useState([]);
   const [message, setMessage] = useState("");
 
@@ -38,12 +40,13 @@ const MessageInbox = ({ selectedUser, currentUser }) => {
     return () => {
       socket.off("getMessage");
     };
-  }, [currentUser,socket,message]);
+  }, [currentUser, socket, message]);
 
   useEffect(() => {
     const fetchMessage = async () => {
       try {
         setMessageList([]);
+        setLoading(true);
         if (userDetails && selectedUser) {
           const res = await axios.get(
             `http://localhost:8001/messages/${selectedUser?._id}`,
@@ -54,6 +57,7 @@ const MessageInbox = ({ selectedUser, currentUser }) => {
             }
           );
           setMessageList((prev) => [...prev, ...res.data.data]);
+          setLoading(false);
         }
       } catch (error) {
         console.log("Error message fetching", error);
@@ -71,88 +75,75 @@ const MessageInbox = ({ selectedUser, currentUser }) => {
   );
   return (
     <>
-      {selectedUser ? (
-        <>
-          <div
-            style={{
-              padding: "15px",
-              borderBottom: "1px solid #ddd",
-              background: "#ededed",
-              fontWeight: "bold",
-              position: "relative",
-            }}
-          >
-            <h2>{selectedUser.name}</h2>
-          </div>
+      <div
+        style={{
+          padding: "15px",
+          borderBottom: "1px solid #ddd",
+          background: "#ededed",
+          fontWeight: "bold",
+          position: "relative",
+        }}
+      >
+        <h2>{selectedUser.name}</h2>
+      </div>
 
-          <div
-            style={{
-              flexGrow: 1,
-              overflowY: "auto",
-              border: "1px solid #eee",
-              padding: 10,
-              marginBottom: 10,
-              background: "#fafafa",
-              maxHeight: "400px",
-              // display:"flex",
-              // flexDirection:"column-reverse"
-            }}
-          >
-            {filterMessage.map((msg, i) => (
-              <div
-                key={i}
-                style={{
-                  textAlign:
-                    msg.senderId === currentUser?.id ? "right" : "left",
-                  margin: "5px 0",
-                }}
-              >
-                <span
-                  style={{
-                    display: "inline-block",
-                    overflow: "auto",
-                    padding: "8px 12px",
-                    borderRadius: "15px",
-                    maxWidth: "70%",
-                    background:
-                      msg.senderId === currentUser?.id ? "#1890ff" : "#f5f5f5",
-                    color: msg.senderId === currentUser?.id ? "white" : "black",
-                  }}
-                >
-                  {msg.message}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <Space.Compact
-              style={{ width: "90%", position: "absolute", bottom: 10 }}
-            >
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type a message"
-              />
-              <Button type="primary" onClick={handleSendMessage}>
-                Send
-              </Button>
-            </Space.Compact>
-          </div>
-        </>
+      {loading ? (
+        <Loading />
       ) : (
         <div
           style={{
             flexGrow: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#888",
+            overflowY: "auto",
+            border: "1px solid #eee",
+            padding: 10,
+            marginBottom: 10,
+            background: "#fafafa",
+            maxHeight: "400px",
+            // display:"flex",
+            // flexDirection:"column-reverse"
           }}
         >
-          Select a chat to start messaging
+          {filterMessage.map((msg, i) => (
+            <div
+              key={i}
+              style={{
+                textAlign: msg.senderId === currentUser?.id ? "right" : "left",
+                margin: "5px 0",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  overflow: "auto",
+                  padding: "8px 12px",
+                  borderRadius: "15px",
+                  maxWidth: "70%",
+                  background:
+                    msg.senderId === currentUser?.id ? "#1890ff" : "#f5f5f5",
+                  color: msg.senderId === currentUser?.id ? "white" : "black",
+                }}
+              >
+                {msg.message}
+              </span>
+            </div>
+          ))}
         </div>
       )}
+
+      <div>
+        <Space.Compact
+          style={{ width: "90%", position: "absolute", bottom: 10 }}
+        >
+          <Input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type a message"
+          />
+          <Button type="primary" onClick={handleSendMessage}>
+            Send
+          </Button>
+        </Space.Compact>
+      </div>
     </>
   );
 };

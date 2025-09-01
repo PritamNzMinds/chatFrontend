@@ -1,41 +1,42 @@
 import { Button, Col, Layout, Row } from "antd";
 import UserList from "../components/UserList";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import MessageInbox from "../components/MessageInbox";
 import { io } from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { removeLogin } from "../store/auth/authSlicer";
+import Loading from "../components/Loading";
 
 const { Header, Content, Footer, Sider } = Layout;
 
 const socket = io("http://localhost:8001/");
+
+// const MessageComponent = lazy(() => import("../components/MessageInbox"));
+// const UserListComponent = lazy(() => import("../components/UserList"));
+
 const ChatPage = () => {
+  const userDetails = useSelector((state) => state?.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const userDetails=useSelector((state)=> state?.user);
-  const dispatch=useDispatch()
-  const navigate=useNavigate()
-
+  const [loading,setLoading]=useState(true);
   const [currentUser, setCurrentUser] = useState();
   const [userList, setUserList] = useState([]);
   const [lastMessageList, setLastMessageList] = useState([]);
   const [activeReceiver, setActiveReceiver] = useState(null);
 
-  const handleLogout=()=>{
+  const handleLogout = () => {
     dispatch(removeLogin());
     navigate("/login");
-  }
+  };
 
   useEffect(() => {
     // fetch user data except logged In user
     const fetchUserData = async () => {
       try {
         if (userDetails) {
-          // join room
-          // socket.emit("addUser", userDetails.id);
-          // socket.emit("addUser", userDetails);
-          // set logged in user
           setCurrentUser(userDetails);
           // get res from db
           const res = await axios.get("http://localhost:8001/getUsers", {
@@ -45,6 +46,7 @@ const ChatPage = () => {
           });
           setUserList(res.data.data.users);
           setLastMessageList(res.data.data.lastMessageList);
+          setLoading(false);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -52,46 +54,10 @@ const ChatPage = () => {
     };
 
     fetchUserData();
-  //   socket.on("connect", () => {
-  //   console.log("✅ Connected to server with socket id:", socket.id);
-  // });
     return () => {
       socket.off("getUsers");
-      // socket.off("getMessage");
     };
   }, []);
-
-//   useEffect(() => {
-//     console.log(currentUser?.id)
-//   if (currentUser?.id) {
-//     socket.emit("addUser", currentUser);
-//   }
-// }, [currentUser, socket]);
-
-
-  // useEffect(() => {
-  //   const fetchMessage = async () => {
-  //     try {
-  //       const loggedInUser = localStorage.getItem("users");
-  //       setMessageList([]);
-  //       if (loggedInUser) {
-  //         const userObject = JSON.parse(loggedInUser);
-  //         const res = await axios.get(
-  //           `http://localhost:8001/messages/${selectedUser?._id}`,
-  //           {
-  //             headers: {
-  //               Authorization: `Bearer ${userObject.token}`,
-  //             },
-  //           }
-  //         );
-  //         setMessageList((prev) => [...prev, ...res.data.data]);
-  //       }
-  //     } catch (error) {
-  //       console.log("Error message fetching", error);
-  //     }
-  //   };
-  //   fetchMessage();
-  // }, [selectedUser]);
 
   // show userlist with last
   const merged = userList.map((user) => {
@@ -108,7 +74,12 @@ const ChatPage = () => {
     <>
       <Layout>
         <Header
-          style={{ display: "flex", alignItems: "center", justifyContent:"space-between", color: "white" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            color: "white",
+          }}
         >
           <div>
             <h3>Chat With Your friends</h3>
@@ -134,12 +105,17 @@ const ChatPage = () => {
               background: "#fffff",
             }}
           >
-            <UserList
-              onClickUser={(item) => setActiveReceiver(item)}
-              selectedUser={activeReceiver}
-              currentUser={currentUser}
-              merged={merged}
-            />
+            {/* <Suspense fallback={<Loading />}> */}
+            {
+              loading ? <Loading/> : <UserList
+                onClickUser={(item) => setActiveReceiver(item)}
+                selectedUser={activeReceiver}
+                currentUser={currentUser}
+                merged={merged}
+              />
+            }
+              
+            {/* </Suspense> */}
           </Col>
           <Col
             span={17}
@@ -154,7 +130,18 @@ const ChatPage = () => {
               background: "#fffff",
             }}
           >
-            <MessageInbox selectedUser={activeReceiver} currentUser={currentUser} />
+            {activeReceiver ? (
+              // <Suspense fallback={<Loading />}>
+                <MessageInbox
+                  selectedUser={activeReceiver}
+                  currentUser={currentUser}
+                />
+              // </Suspense>
+            ) : (
+              <div style={{ textAlign: "center", marginTop: "40%" }}>
+                <h3>Select a user to start chatting</h3>
+              </div>
+            )}
           </Col>
         </Row>
       </Layout>
